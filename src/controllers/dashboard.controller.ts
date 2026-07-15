@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { connectDB } from "@/lib/db/connect";
 import { Student } from "@/models/Student";
 import { Teacher } from "@/models/Teacher";
@@ -39,17 +40,19 @@ async function getStaffOverview(school?: string) {
     };
   }
 
+  const schoolId = new Types.ObjectId(school);
+
   const [totalStudents, totalTeachers, totalClasses, genderAgg, classAgg, recentActivity, notices] =
     await Promise.all([
       Student.countDocuments({ school, status: "active" }),
       Teacher.countDocuments({ school, status: "active" }),
       Class.countDocuments({ school }),
       Student.aggregate([
-        { $match: { school: school, status: "active" } },
+        { $match: { school: schoolId, status: "active" } },
         { $group: { _id: "$gender", count: { $sum: 1 } } },
       ]),
       Student.aggregate([
-        { $match: { school: school, status: "active" } },
+        { $match: { school: schoolId, status: "active" } },
         {
           $lookup: {
             from: "classes",
