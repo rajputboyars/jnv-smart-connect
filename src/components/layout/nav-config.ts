@@ -15,6 +15,8 @@ import {
   Bell,
   ScrollText,
   Settings,
+  BarChart3,
+  Sparkles,
 } from "lucide-react";
 import { PERMISSIONS, type Permission } from "@/lib/auth/rbac";
 
@@ -39,6 +41,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Health", href: "/dashboard/health", icon: HeartPulse, permission: PERMISSIONS.HEALTH_VIEW },
   { label: "Accounts", href: "/dashboard/accounts", icon: Wallet, permission: PERMISSIONS.ACCOUNTS_MANAGE },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell, permission: PERMISSIONS.NOTIFICATIONS_VIEW },
+  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3, permission: PERMISSIONS.ANALYTICS_VIEW },
+  { label: "AI Assist", href: "/dashboard/ai-assist", icon: Sparkles, permission: PERMISSIONS.AI_ASSIST_USE },
   { label: "Activity Logs", href: "/dashboard/activity-logs", icon: ScrollText, permission: PERMISSIONS.ACTIVITY_LOGS_VIEW },
   { label: "Settings", href: "/dashboard/settings", icon: Settings, permission: PERMISSIONS.SCHOOL_SETTINGS_MANAGE },
 ];

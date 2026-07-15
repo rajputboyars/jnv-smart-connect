@@ -6,6 +6,7 @@ import { Student } from "@/models/Student";
 import { Parent } from "@/models/Parent";
 import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
+import { assertStudentInSchool } from "@/lib/auth/student-scope";
 import { ROLES } from "@/types/roles";
 import type { AccessTokenPayload } from "@/lib/auth/jwt";
 import type {
@@ -248,6 +249,7 @@ export async function listHostelAllocations(school?: string) {
 export async function allocateBed(input: CreateAllocationInput, actor: { id: string; school?: string }) {
   await connectDB();
   if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+  await assertStudentInSchool(input.student, actor.school);
 
   const room = await HostelRoom.findOne({ _id: input.room, school: actor.school });
   if (!room) throw ApiError.badRequest("Room not found");
