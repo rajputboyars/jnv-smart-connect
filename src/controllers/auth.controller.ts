@@ -4,6 +4,7 @@ import { User } from "@/models/User";
 import { ActivityLog } from "@/models/ActivityLog";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { createSession, destroySession } from "@/lib/auth/session";
+import { verifyRefreshToken } from "@/lib/auth/jwt";
 import { sendMail } from "@/lib/email/mailer";
 import { passwordResetEmail, welcomeEmail } from "@/lib/email/templates";
 import { ApiError } from "@/lib/utils/api-error";
@@ -119,11 +120,25 @@ export async function loginUser(input: LoginInput, meta: { ip?: string; userAgen
   );
 
   if (!user || !user.isActive) {
+    await ActivityLog.create({
+      action: "auth.login_failed",
+      metadata: { email: input.email.toLowerCase(), reason: "no_such_account" },
+      ipAddress: meta.ip,
+      userAgent: meta.userAgent,
+    });
     throw ApiError.unauthorized("Invalid email or password");
   }
 
   const isValid = await verifyPassword(input.password, user.password);
   if (!isValid) {
+    await ActivityLog.create({
+      user: user._id,
+      action: "auth.login_failed",
+      metadata: { email: input.email.toLowerCase(), reason: "bad_password" },
+      school: user.school,
+      ipAddress: meta.ip,
+      userAgent: meta.userAgent,
+    });
     throw ApiError.unauthorized("Invalid email or password");
   }
 
@@ -146,6 +161,42 @@ export async function loginUser(input: LoginInput, meta: { ip?: string; userAgen
     school: user.school,
     ipAddress: meta.ip,
     userAgent: meta.userAgent,
+  });
+
+  return {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    role: user.role as Role,
+    avatarUrl: user.avatarUrl,
+  };
+}
+
+export async function refreshSession(refreshToken: string | null) {
+  if (!refreshToken) {
+    throw ApiError.unauthorized("Session expired, please sign in again");
+  }
+
+  const payload = verifyRefreshToken(refreshToken);
+  if (!payload) {
+    throw ApiError.unauthorized("Session expired, please sign in again");
+  }
+
+  await connectDB();
+  const user = await User.findById(payload.sub);
+  if (!user || !user.isActive) {
+    throw ApiError.unauthorized("Session expired, please sign in again");
+  }
+
+  // Re-reads the user's current role/school from the database (rather than
+  // trusting the old access token) so a role change or school transfer
+  // takes effect on the very next silent refresh, not just on next login.
+  await createSession({
+    sub: user._id.toString(),
+    role: user.role,
+    school: user.school?.toString(),
+    name: user.name,
+    email: user.email,
   });
 
   return {

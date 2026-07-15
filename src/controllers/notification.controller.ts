@@ -66,10 +66,14 @@ export async function createNotification(
   return { id: notification._id.toString() };
 }
 
-export async function markNotificationRead(notificationId: string, userId: string) {
+export async function markNotificationRead(notificationId: string, session: AccessTokenPayload) {
   await connectDB();
+  const userId = session.sub;
 
-  const notification = await Notification.findById(notificationId);
+  const notification = await Notification.findOne({
+    _id: notificationId,
+    ...(session.school ? { school: session.school } : {}),
+  });
   if (!notification) {
     throw ApiError.notFound("Notification not found");
   }

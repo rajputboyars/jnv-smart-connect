@@ -6,34 +6,19 @@ import { Parent } from "@/models/Parent";
 import { Notification } from "@/models/Notification";
 import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
-import { ROLES } from "@/types/roles";
+import { assertCanAccessStudent, assertStudentInSchool } from "@/lib/auth/student-scope";
 import type { AccessTokenPayload } from "@/lib/auth/jwt";
 import type {
   CreateMedicineLogInput,
   CreateDoctorVisitInput,
 } from "@/validators/health.validator";
 
-async function assertCanViewStudent(studentId: string, session: AccessTokenPayload) {
-  if (session.role === ROLES.STUDENT) {
-    const own = await Student.findOne({ user: session.sub }).select("_id");
-    if (!own || own._id.toString() !== studentId) {
-      throw ApiError.forbidden("You can only view your own medical records");
-    }
-    return;
-  }
-
-  if (session.role === ROLES.PARENT) {
-    const parent = await Parent.findOne({ user: session.sub, children: studentId });
-    if (!parent) throw ApiError.forbidden("This student isn't linked to your account");
-  }
-}
-
 export async function getStudentMedicalReport(
   studentId: string,
   session: AccessTokenPayload
 ) {
   await connectDB();
-  await assertCanViewStudent(studentId, session);
+  await assertCanAccessStudent(studentId, session, "You don't have access to this student's medical records");
 
   const student = await Student.findOne({
     _id: studentId,
@@ -85,7 +70,7 @@ export async function createMedicineLog(
   actor: { id: string; school?: string }
 ) {
   await connectDB();
-  if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+  await assertStudentInSchool(input.student, actor.school);
 
   const log = await MedicineLog.create({
     ...input,
@@ -110,7 +95,7 @@ export async function createDoctorVisit(
   actor: { id: string; school?: string }
 ) {
   await connectDB();
-  if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+  await assertStudentInSchool(input.student, actor.school);
 
   const visit = await DoctorVisit.create({
     student: input.student,

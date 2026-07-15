@@ -58,6 +58,27 @@ export async function bulkMarkHostelAttendance(
   await connectDB();
   if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
 
+  // Verify every student in this bulk roll-call actually has an active
+  // allocation in this building/school — otherwise a caller could submit
+  // arbitrary student ids and inject night-attendance records for students
+  // who aren't even housed here (or belong to another school).
+  const studentIds = input.records.map((r) => r.student);
+  const validAllocations = await HostelAllocation.find({
+    student: { $in: studentIds },
+    school: actor.school,
+    status: "active",
+  })
+    .populate({ path: "room", select: "building" })
+    .lean();
+  const validStudentIds = new Set(
+    validAllocations
+      .filter((a) => (a.room as unknown as { building?: { toString(): string } })?.building?.toString() === input.building)
+      .map((a) => a.student.toString())
+  );
+  if (validStudentIds.size !== new Set(studentIds.map(String)).size) {
+    throw ApiError.badRequest("One or more students aren't allocated to this building");
+  }
+
   const day = normalizeDate(input.date);
 
   const ops = input.records.map((record) => ({

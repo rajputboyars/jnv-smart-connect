@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — JNV Smart Connect</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        text-align: center;
+        padding: 1.5rem;
+      }
+      .card { max-width: 28rem; }
+      h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+      p { color: #94a3b8; line-height: 1.5; }
+      button {
+        margin-top: 1.5rem;
+        padding: 0.6rem 1.25rem;
+        border-radius: 0.5rem;
+        border: 1px solid #334155;
+        background: #1d4ed8;
+        color: white;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>You're offline</h1>
+      <p>
+        JNV Smart Connect needs a connection to load this page. Pages you've
+        already visited may still work from cache — try going back, or
+        reconnect and reload.
+      </p>
+      <button onclick="location.reload()">Try again</button>
+    </div>
+  </body>
+</html>

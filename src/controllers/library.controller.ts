@@ -4,6 +4,7 @@ import { Book, type IBook } from "@/models/Book";
 import { BookIssue, type IBookIssue } from "@/models/BookIssue";
 import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
+import { assertStudentInSchool } from "@/lib/auth/student-scope";
 import type { BookIssueStatus } from "@/models/enums";
 import type {
   CreateBookInput,
@@ -174,7 +175,7 @@ export async function listBookIssues(school?: string, status?: BookIssueStatus) 
 
 export async function issueBook(input: IssueBookInput, actor: { id: string; school?: string }) {
   await connectDB();
-  if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+  await assertStudentInSchool(input.student, actor.school);
 
   const book = await Book.findOne({ _id: input.book, school: actor.school });
   if (!book) throw ApiError.badRequest("Book not found");

@@ -1,15 +1,34 @@
 # JNV Smart Connect
 
-A School ERP for Jawahar Navodaya Vidyalayas — role-based dashboards, student and
-teacher records, notifications, and secure authentication, built on Next.js 16
-(App Router), MongoDB/Mongoose, and shadcn-style UI over Tailwind CSS v4.
+A production-ready School ERP for Jawahar Navodaya Vidyalayas — role-based
+dashboards, Students/Teachers/Parents records, Academics, Attendance
+(manual + QR), Hostel, Health, Library, Notifications, an analytics
+dashboard, and Claude-powered AI assistance, built on Next.js 16 (App
+Router), MongoDB/Mongoose, and shadcn-style UI over Tailwind CSS v4.
+
+## Documentation
+
+| Doc | Covers |
+|---|---|
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Layering, request-flow diagrams, the security boundary in `proxy.ts`, multi-tenancy design |
+| [`docs/DATABASE.md`](./docs/DATABASE.md) | Every collection, the ER diagram, indexing strategy |
+| [`docs/API.md`](./docs/API.md) | Every endpoint, its permission, its rate limit |
+| [`docs/FOLDER_STRUCTURE.md`](./docs/FOLDER_STRUCTURE.md) | What lives where, naming conventions |
+| [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Docker Compose, Vercel/Atlas, env vars, scaling caveats |
+| [`docs/ROADMAP.md`](./docs/ROADMAP.md) | What's built vs. honestly scoped-down vs. deferred, and why |
 
 ## Tech stack
 
-- **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS v4, React Hook Form,
-  Zod, TanStack Query, Framer Motion, Recharts, next-themes, Lucide icons
-- **Backend**: Next.js Route Handlers, MongoDB/Mongoose, JWT auth (access + refresh
-  cookies), bcrypt, RBAC, Nodemailer, Cloudinary-ready
+- **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS v4, React
+  Hook Form, Zod, TanStack Query, Framer Motion, Recharts, next-themes,
+  Lucide icons
+- **Backend**: Next.js Route Handlers, MongoDB/Mongoose, JWT auth (access +
+  refresh cookies with silent refresh), bcrypt, RBAC, Nodemailer,
+  Cloudinary (signed uploads), Anthropic Claude API (AI features)
+- **Security**: sliding-window rate limiting, Origin/Referer CSRF checks,
+  CSP/HSTS/security headers, audited RBAC data-scoping
+- **Ops**: Docker (multi-stage, `output: "standalone"`), PWA (installable,
+  offline app shell), Vitest unit tests, Playwright E2E
 
 ## Getting started
 
@@ -26,11 +45,14 @@ teacher records, notifications, and secure authentication, built on Next.js 16
    ```
 
    At minimum you need a running MongoDB instance (`MONGODB_URI`) and two JWT
-   secrets (`JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`). SMTP is optional in
-   development — email sends are skipped (and logged) if `SMTP_HOST` isn't set.
+   secrets (`JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`). SMTP, Cloudinary, and
+   the Anthropic API key are all optional in development — each integration
+   degrades gracefully (skipped-and-logged, or a clear "not configured"
+   response) if its env vars are unset. See `docs/DEPLOYMENT.md` for the full
+   variable reference.
 
-3. Seed an initial school, academic year, classes/sections, core subjects, and a
-   Super Admin login:
+3. Seed an initial school, academic year, classes/sections, core subjects, and
+   a Super Admin login:
 
    ```bash
    npm run seed
@@ -46,34 +68,46 @@ teacher records, notifications, and secure authentication, built on Next.js 16
    npm run dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000) and sign in with the seeded
-   Super Admin account.
+   Open [http://localhost:3000](http://localhost:3000) and sign in with the
+   seeded Super Admin account.
 
-## Other scripts
+### Running with Docker instead
 
-- `npm run build` — production build
-- `npm run start` — run the production build
+```bash
+docker compose up -d --build
+```
+
+See [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) for the full walkthrough
+(secrets, seeding inside the container, updating).
+
+## Scripts
+
+- `npm run dev` — dev server (Turbopack)
+- `npm run build` / `npm run start` — production build / run it
 - `npm run lint` — ESLint
 - `npm run typecheck` — TypeScript, no emit
+- `npm test` — Vitest unit tests
+- `npm run test:e2e` — Playwright E2E (starts the app itself)
+- `npm run seed` — seed the initial school/admin
 
-## Architecture
+## Architecture at a glance
 
-- `src/app` — routes (App Router), grouped into `(auth)` (login/forgot/reset) and
-  `dashboard` (role-aware, protected)
-- `src/app/api` — Route Handlers, thin: parse + validate, call a controller
-- `src/controllers` — business logic, one per domain (auth, student, teacher, …)
-- `src/middlewares` — `withAuth` / `withPermission` (RBAC guards) and centralized
-  error handling for Route Handlers
-- `src/models` — Mongoose schemas
-- `src/validators` — Zod schemas shared by API routes and client forms
-- `src/lib/auth` — JWT, password hashing, session cookies, the RBAC permission
-  matrix, and the server-side Data Access Layer (`dal.ts`)
-- `src/services` — client-side fetch wrappers consumed by TanStack Query hooks
-  in `src/hooks`
-- `src/components` — `ui` (design-system primitives), `layout` (shell/nav),
-  and feature folders (`students`, `teachers`, `dashboard`, `auth`, …)
-- `src/proxy.ts` — Next.js 16 Proxy (formerly Middleware): optimistic auth +
-  RBAC redirects, re-checked server-side on every protected page/route
+```
+Route (app/api/**/route.ts)
+  -> Middleware (withAuth / withPermission / withErrorHandling)
+     -> Validator (Zod)
+        -> Controller (business logic — the only layer touching models)
+           -> Model (Mongoose schema)
+```
+
+`src/proxy.ts` (Next.js 16's renamed `middleware.ts`, running in the Node.js
+runtime) is the single interception point for every request: rate limiting,
+CSRF/origin verification, security headers, and — for page routes — the
+optimistic auth/RBAC redirect (re-checked server-side on every protected
+page via `src/lib/auth/dal.ts`, and independently by every API route's
+`withPermission`, since a proxy matcher must never be the *only* thing
+enforcing authorization). Full detail, with sequence diagrams, in
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Roles
 
@@ -83,10 +117,15 @@ Librarian, Parent, Student — see `src/types/roles.ts` and
 
 ## Status
 
-Fully built: authentication (login/forgot/reset password), RBAC, role
-dashboards, notifications, activity logs, profile/password management, and
-full Students and Teachers CRUD.
+See [`docs/ROADMAP.md`](./docs/ROADMAP.md) for the complete, honest
+breakdown of what's built, what's a deliberately scoped-down version of a
+bigger ask (and why), and what's deferred.
 
-Scaffolded with a "coming soon" placeholder (routes and RBAC guards exist,
-UI is pending): Parents directory, Classes/Sections/Subjects management,
-Attendance, Homework, Exams, Library, Hostel, Accounts, School settings.
+**Fully built**: Auth (incl. silent refresh), RBAC, role dashboards,
+Students/Teachers/Parents CRUD, Academics, Attendance (manual/bulk/QR),
+Hostel, Health, Library, Notifications, Activity Logs, Analytics dashboard,
+AI features (Claude-gated) + rule-based risk scoring, security hardening,
+Docker, PWA basics, and a Vitest + Playwright test suite.
+
+**"Coming soon" placeholders** (RBAC-gated routes exist, no data layer yet):
+Homework, Exams, Accounts & fees, School settings.

@@ -26,8 +26,9 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import { exportToExcel } from "@/lib/export/excel";
-import { exportToPdf } from "@/lib/export/pdf";
+// jspdf/jspdf-autotable and exceljs are large and only needed when the user
+// actually clicks an export button — dynamically imported inside the
+// handlers below instead of bundled into every visitor's initial page load.
 
 function firstOfMonth() {
   const d = new Date();
@@ -48,8 +49,9 @@ export function ClassAttendanceReport() {
 
   const chartData = (report ?? []).map((r) => ({ name: r.student.name.split(" ")[0], percentage: r.percentage }));
 
-  function handleExcelExport() {
+  async function handleExcelExport() {
     if (!report) return;
+    const { exportToExcel } = await import("@/lib/export/excel");
     exportToExcel(
       `attendance-report-${from}-to-${to}`,
       "Attendance",
@@ -76,8 +78,9 @@ export function ClassAttendanceReport() {
     );
   }
 
-  function handlePdfExport() {
+  async function handlePdfExport() {
     if (!report) return;
+    const { exportToPdf } = await import("@/lib/export/pdf");
     exportToPdf(
       `attendance-report-${from}-to-${to}`,
       `Attendance Report (${from} to ${to})`,

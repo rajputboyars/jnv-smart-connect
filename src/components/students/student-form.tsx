@@ -10,6 +10,7 @@ import {
 } from "@/validators/student.validator";
 import { useCreateStudent, useUpdateStudent } from "@/hooks/use-students";
 import { useClassOptions } from "@/hooks/use-academics";
+import { PhotoUpload } from "@/components/shared/photo-upload";
 import { ApiClientError } from "@/lib/api-client";
 import { GENDERS, BLOOD_GROUPS, HOUSES, STUDENT_STATUSES } from "@/models/enums";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,7 @@ export function StudentForm({
 
   const selectedClassId = useWatch({ control: form.control, name: "currentClass" });
   const sections = classes.find((c) => c.id === selectedClassId)?.sections ?? [];
+  const watchedName = useWatch({ control: form.control, name: "name" });
 
   function onSubmit(values: CreateStudentInput) {
     mutation.mutate(values, {
@@ -231,9 +233,9 @@ export function StudentForm({
                   name="photoUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Photo URL (optional)</FormLabel>
+                      <FormLabel>Photo (optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://…" {...field} />
+                        <PhotoUpload value={field.value ?? ""} onChange={field.onChange} folder="students" name={watchedName} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

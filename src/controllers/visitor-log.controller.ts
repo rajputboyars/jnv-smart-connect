@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db/connect";
 import { VisitorLog } from "@/models/VisitorLog";
 import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
+import { assertStudentInSchool } from "@/lib/auth/student-scope";
 import type { CreateVisitorLogInput } from "@/validators/hostel.validator";
 
 export async function listVisitorLogs(school?: string) {
@@ -33,7 +34,7 @@ export async function createVisitorLog(
   actor: { id: string; school?: string }
 ) {
   await connectDB();
-  if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+  await assertStudentInSchool(input.student, actor.school);
 
   const log = await VisitorLog.create({
     ...input,

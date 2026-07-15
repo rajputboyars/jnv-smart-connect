@@ -47,6 +47,10 @@ export const PERMISSIONS = {
   ACTIVITY_LOGS_VIEW: "activity_logs:view",
 
   SCHOOL_SETTINGS_MANAGE: "school_settings:manage",
+
+  ANALYTICS_VIEW: "analytics:view",
+
+  AI_ASSIST_USE: "ai_assist:use",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -86,6 +90,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.NOTIFICATIONS_SEND,
     PERMISSIONS.ACTIVITY_LOGS_VIEW,
     PERMISSIONS.SCHOOL_SETTINGS_MANAGE,
+    PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.AI_ASSIST_USE,
   ],
 
   [ROLES.VICE_PRINCIPAL]: [
@@ -106,6 +112,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.HEALTH_VIEW,
     PERMISSIONS.NOTIFICATIONS_VIEW,
     PERMISSIONS.NOTIFICATIONS_SEND,
+    PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.AI_ASSIST_USE,
   ],
 
   [ROLES.TEACHER]: [
@@ -119,6 +127,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.LIBRARY_VIEW,
     PERMISSIONS.HEALTH_VIEW,
     PERMISSIONS.NOTIFICATIONS_VIEW,
+    PERMISSIONS.AI_ASSIST_USE,
   ],
 
   [ROLES.HOSTEL_WARDEN]: [
@@ -197,6 +206,8 @@ export const ROUTE_PERMISSIONS: { prefix: string; permission: Permission | Permi
   { prefix: "/dashboard/notifications", permission: PERMISSIONS.NOTIFICATIONS_VIEW },
   { prefix: "/dashboard/activity-logs", permission: PERMISSIONS.ACTIVITY_LOGS_VIEW },
   { prefix: "/dashboard/settings", permission: PERMISSIONS.SCHOOL_SETTINGS_MANAGE },
+  { prefix: "/dashboard/analytics", permission: PERMISSIONS.ANALYTICS_VIEW },
+  { prefix: "/dashboard/ai-assist", permission: PERMISSIONS.AI_ASSIST_USE },
 ];
 
 export function getRequiredPermissionsForPath(pathname: string): Permission[] | null {
