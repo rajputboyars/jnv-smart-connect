@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyAccessToken } from "@/lib/auth/jwt";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/session";
-import { getRequiredPermissionForPath, can } from "@/lib/auth/rbac";
+import { getRequiredPermissionsForPath, can } from "@/lib/auth/rbac";
 
 const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
 
@@ -35,8 +35,8 @@ export function proxy(request: NextRequest) {
 
   // Optimistic RBAC check for module routes (defense in depth happens again
   // server-side in the page/API layer against the database).
-  const requiredPermission = getRequiredPermissionForPath(pathname);
-  if (requiredPermission && !can(session.role, requiredPermission)) {
+  const requiredPermissions = getRequiredPermissionsForPath(pathname);
+  if (requiredPermissions && !requiredPermissions.some((p) => can(session.role, p))) {
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 

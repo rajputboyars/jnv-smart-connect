@@ -30,8 +30,15 @@ export const PERMISSIONS = {
   EXAMS_VIEW: "exams:view",
   EXAMS_MANAGE: "exams:manage",
 
+  LIBRARY_VIEW: "library:view",
   LIBRARY_MANAGE: "library:manage",
+
+  HOSTEL_VIEW: "hostel:view",
   HOSTEL_MANAGE: "hostel:manage",
+
+  HEALTH_VIEW: "health:view",
+  HEALTH_MANAGE: "health:manage",
+
   ACCOUNTS_MANAGE: "accounts:manage",
 
   NOTIFICATIONS_VIEW: "notifications:view",
@@ -68,8 +75,12 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.HOMEWORK_VIEW,
     PERMISSIONS.EXAMS_VIEW,
     PERMISSIONS.EXAMS_MANAGE,
+    PERMISSIONS.LIBRARY_VIEW,
     PERMISSIONS.LIBRARY_MANAGE,
+    PERMISSIONS.HOSTEL_VIEW,
     PERMISSIONS.HOSTEL_MANAGE,
+    PERMISSIONS.HEALTH_VIEW,
+    PERMISSIONS.HEALTH_MANAGE,
     PERMISSIONS.ACCOUNTS_MANAGE,
     PERMISSIONS.NOTIFICATIONS_VIEW,
     PERMISSIONS.NOTIFICATIONS_SEND,
@@ -90,6 +101,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.STAFF_ATTENDANCE_MARK,
     PERMISSIONS.HOMEWORK_VIEW,
     PERMISSIONS.EXAMS_VIEW,
+    PERMISSIONS.LIBRARY_VIEW,
+    PERMISSIONS.HOSTEL_VIEW,
+    PERMISSIONS.HEALTH_VIEW,
     PERMISSIONS.NOTIFICATIONS_VIEW,
     PERMISSIONS.NOTIFICATIONS_SEND,
   ],
@@ -102,13 +116,18 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.HOMEWORK_VIEW,
     PERMISSIONS.HOMEWORK_MANAGE,
     PERMISSIONS.EXAMS_VIEW,
+    PERMISSIONS.LIBRARY_VIEW,
+    PERMISSIONS.HEALTH_VIEW,
     PERMISSIONS.NOTIFICATIONS_VIEW,
   ],
 
   [ROLES.HOSTEL_WARDEN]: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.STUDENTS_VIEW,
+    PERMISSIONS.HOSTEL_VIEW,
     PERMISSIONS.HOSTEL_MANAGE,
+    PERMISSIONS.HEALTH_VIEW,
+    PERMISSIONS.HEALTH_MANAGE,
     PERMISSIONS.NOTIFICATIONS_VIEW,
   ],
 
@@ -122,6 +141,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [ROLES.LIBRARIAN]: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.STUDENTS_VIEW,
+    PERMISSIONS.LIBRARY_VIEW,
     PERMISSIONS.LIBRARY_MANAGE,
     PERMISSIONS.NOTIFICATIONS_VIEW,
   ],
@@ -131,11 +151,17 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.ATTENDANCE_VIEW,
     PERMISSIONS.HOMEWORK_VIEW,
     PERMISSIONS.EXAMS_VIEW,
+    PERMISSIONS.LIBRARY_VIEW,
+    PERMISSIONS.HOSTEL_VIEW,
+    PERMISSIONS.HEALTH_VIEW,
     PERMISSIONS.NOTIFICATIONS_VIEW,
   ],
 
   [ROLES.STUDENT]: [
     PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.LIBRARY_VIEW,
+    PERMISSIONS.HOSTEL_VIEW,
+    PERMISSIONS.HEALTH_VIEW,
     PERMISSIONS.ATTENDANCE_VIEW,
     PERMISSIONS.HOMEWORK_VIEW,
     PERMISSIONS.EXAMS_VIEW,
@@ -152,10 +178,11 @@ export function canAny(role: Role, permissions: Permission[]): boolean {
 }
 
 /**
- * Route-prefix -> permission map consumed by proxy.ts for optimistic
- * redirects, and reusable by server components for defense in depth.
+ * Route-prefix -> permission(s) map consumed by proxy.ts for optimistic
+ * redirects, and reusable by server components for defense in depth. When an
+ * array is given, holding any one of the permissions is enough.
  */
-export const ROUTE_PERMISSIONS: { prefix: string; permission: Permission }[] = [
+export const ROUTE_PERMISSIONS: { prefix: string; permission: Permission | Permission[] }[] = [
   { prefix: "/dashboard/students", permission: PERMISSIONS.STUDENTS_VIEW },
   { prefix: "/dashboard/teachers", permission: PERMISSIONS.TEACHERS_VIEW },
   { prefix: "/dashboard/parents", permission: PERMISSIONS.PARENTS_VIEW },
@@ -163,15 +190,17 @@ export const ROUTE_PERMISSIONS: { prefix: string; permission: Permission }[] = [
   { prefix: "/dashboard/attendance", permission: PERMISSIONS.ATTENDANCE_VIEW },
   { prefix: "/dashboard/homework", permission: PERMISSIONS.HOMEWORK_VIEW },
   { prefix: "/dashboard/exams", permission: PERMISSIONS.EXAMS_VIEW },
-  { prefix: "/dashboard/library", permission: PERMISSIONS.LIBRARY_MANAGE },
-  { prefix: "/dashboard/hostel", permission: PERMISSIONS.HOSTEL_MANAGE },
+  { prefix: "/dashboard/library", permission: [PERMISSIONS.LIBRARY_VIEW, PERMISSIONS.LIBRARY_MANAGE] },
+  { prefix: "/dashboard/hostel", permission: [PERMISSIONS.HOSTEL_VIEW, PERMISSIONS.HOSTEL_MANAGE] },
+  { prefix: "/dashboard/health", permission: [PERMISSIONS.HEALTH_VIEW, PERMISSIONS.HEALTH_MANAGE] },
   { prefix: "/dashboard/accounts", permission: PERMISSIONS.ACCOUNTS_MANAGE },
   { prefix: "/dashboard/notifications", permission: PERMISSIONS.NOTIFICATIONS_VIEW },
   { prefix: "/dashboard/activity-logs", permission: PERMISSIONS.ACTIVITY_LOGS_VIEW },
   { prefix: "/dashboard/settings", permission: PERMISSIONS.SCHOOL_SETTINGS_MANAGE },
 ];
 
-export function getRequiredPermissionForPath(pathname: string): Permission | null {
+export function getRequiredPermissionsForPath(pathname: string): Permission[] | null {
   const match = ROUTE_PERMISSIONS.find((route) => pathname.startsWith(route.prefix));
-  return match?.permission ?? null;
+  if (!match) return null;
+  return Array.isArray(match.permission) ? match.permission : [match.permission];
 }

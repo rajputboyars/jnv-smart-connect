@@ -58,3 +58,21 @@ export type AttendanceEntityType = (typeof ATTENDANCE_ENTITY_TYPES)[number];
 
 export const ATTENDANCE_METHODS = ["manual", "qr"] as const;
 export type AttendanceMethod = (typeof ATTENDANCE_METHODS)[number];
+
+export const HOSTEL_NIGHT_STATUSES = ["present", "absent", "on_leave"] as const;
+export type HostelNightStatus = (typeof HOSTEL_NIGHT_STATUSES)[number];
+
+export const HOSTEL_ALLOCATION_STATUSES = ["active", "vacated"] as const;
+export type HostelAllocationStatus = (typeof HOSTEL_ALLOCATION_STATUSES)[number];
+
+export const LEAVE_REQUEST_STATUSES = ["pending", "approved", "rejected", "cancelled"] as const;
+export type LeaveRequestStatus = (typeof LEAVE_REQUEST_STATUSES)[number];
+
+export const GATE_PASS_STATUSES = ["issued", "returned", "overdue"] as const;
+export type GatePassStatus = (typeof GATE_PASS_STATUSES)[number];
+
+export const MEDICINE_ROUTES = ["oral", "topical", "injection", "other"] as const;
+export type MedicineRoute = (typeof MEDICINE_ROUTES)[number];
+
+export const BOOK_ISSUE_STATUSES = ["issued", "returned", "lost"] as const;
+export type BookIssueStatus = (typeof BOOK_ISSUE_STATUSES)[number];
