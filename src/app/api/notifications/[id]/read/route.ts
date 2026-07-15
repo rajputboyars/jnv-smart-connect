@@ -8,7 +8,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export const POST = withErrorHandling<Ctx>(
   withAuth<Ctx>(async (_req, ctx, session) => {
     const { id } = await ctx.params;
-    const result = await markNotificationRead(id, session.sub);
+    const result = await markNotificationRead(id, session);
     return ok(result, { message: "Marked as read" });
   })
 );

@@ -6,6 +6,7 @@ import { Parent } from "@/models/Parent";
 import { Notification } from "@/models/Notification";
 import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
+import { assertStudentInSchool } from "@/lib/auth/student-scope";
 import { ROLES } from "@/types/roles";
 import type { AccessTokenPayload } from "@/lib/auth/jwt";
 import type {
@@ -71,8 +72,7 @@ export async function listLeaveRequests(
 
 export async function createLeaveRequest(input: CreateLeaveRequestInput, session: AccessTokenPayload) {
   await connectDB();
-  if (!session.school) throw ApiError.badRequest("Your account is not linked to a school");
-
+  await assertStudentInSchool(input.student, session.school);
   await assertCanActForStudent(input.student, session);
 
   const request = await LeaveRequest.create({

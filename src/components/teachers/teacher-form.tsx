@@ -12,6 +12,7 @@ import {
 import { useCreateTeacher, useUpdateTeacher } from "@/hooks/use-teachers";
 import { useClassOptions, useSubjectOptions } from "@/hooks/use-academics";
 import type { ClassOption, SubjectOption } from "@/services/academics.service";
+import { PhotoUpload } from "@/components/shared/photo-upload";
 import { ApiClientError } from "@/lib/api-client";
 import { STAFF_STATUSES } from "@/models/enums";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,8 @@ export function TeacherForm({
     resolver: zodResolver(createTeacherSchema),
     defaultValues: { ...emptyDefaults, ...defaultValues },
   });
+
+  const watchedName = useWatch({ control: form.control, name: "name" });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -151,9 +154,9 @@ export function TeacherForm({
               name="photoUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Photo URL (optional)</FormLabel>
+                  <FormLabel>Photo (optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://…" {...field} />
+                    <PhotoUpload value={field.value ?? ""} onChange={field.onChange} folder="teachers" name={watchedName} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db/connect";
 import { GatePass, type IGatePass } from "@/models/GatePass";
 import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
+import { assertStudentInSchool } from "@/lib/auth/student-scope";
 import type { GatePassStatus } from "@/models/enums";
 import type { CreateGatePassInput } from "@/validators/hostel.validator";
 
@@ -32,7 +33,7 @@ export async function listGatePasses(school?: string, status?: GatePassStatus) {
 
 export async function issueGatePass(input: CreateGatePassInput, actor: { id: string; school?: string }) {
   await connectDB();
-  if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+  await assertStudentInSchool(input.student, actor.school);
 
   const pass = await GatePass.create({
     student: input.student,

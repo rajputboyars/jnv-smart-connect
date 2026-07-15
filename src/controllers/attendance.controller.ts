@@ -78,6 +78,22 @@ export async function bulkMarkStudentAttendance(
   await connectDB();
   if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
 
+  // Bulk upsert takes a client-submitted list of student ids — verify every
+  // one actually belongs to this school and the class/section being marked
+  // in a single query, rather than trusting the payload (which would
+  // otherwise let a caller write attendance records referencing another
+  // school's students, or a class/section a student isn't even enrolled in).
+  const studentIds = input.records.map((r) => r.student);
+  const validCount = await Student.countDocuments({
+    _id: { $in: studentIds },
+    school: actor.school,
+    currentClass: input.class,
+    section: input.section,
+  });
+  if (validCount !== new Set(studentIds.map(String)).size) {
+    throw ApiError.badRequest("One or more students don't belong to this class/section");
+  }
+
   const academicYear = await resolveActiveAcademicYear(actor.school);
   const day = normalizeDate(input.date);
 
@@ -112,6 +128,16 @@ export async function bulkMarkTeacherAttendance(
 ) {
   await connectDB();
   if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+
+  // Same cross-tenant guard as bulkMarkStudentAttendance, scoped to teachers.
+  const teacherIds = input.records.map((r) => r.teacher);
+  const validTeacherCount = await Teacher.countDocuments({
+    _id: { $in: teacherIds },
+    school: actor.school,
+  });
+  if (validTeacherCount !== new Set(teacherIds.map(String)).size) {
+    throw ApiError.badRequest("One or more teachers don't belong to this school");
+  }
 
   const academicYear = await resolveActiveAcademicYear(actor.school);
   const day = normalizeDate(input.date);
