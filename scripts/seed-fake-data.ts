@@ -1,5 +1,5 @@
 import "dotenv/config";
-import mongoose from "mongoose";
+import mongoose, { type HydratedDocument } from "mongoose";
 import { hashPassword } from "../src/lib/auth/password";
 import { School } from "../src/models/School";
 import { AcademicYear } from "../src/models/AcademicYear";
@@ -7,9 +7,9 @@ import { Class } from "../src/models/Class";
 import { Section } from "../src/models/Section";
 import { Subject } from "../src/models/Subject";
 import { User } from "../src/models/User";
-import { Teacher } from "../src/models/Teacher";
+import { Teacher, type ITeacher } from "../src/models/Teacher";
 import { Parent } from "../src/models/Parent";
-import { Student } from "../src/models/Student";
+import { Student, type IStudent } from "../src/models/Student";
 import { Attendance } from "../src/models/Attendance";
 import { ROLES } from "../src/types/roles";
 import { GENDERS, HOUSES, type Gender } from "../src/models/enums";
@@ -76,7 +76,7 @@ async function main() {
 
   // ---- Teachers ----
   const teacherCount = 14;
-  const teachers: Awaited<ReturnType<typeof Teacher.create>>[] = [];
+  const teachers: HydratedDocument<ITeacher>[] = [];
   const teacherPasswordHash = await hashPassword(DEFAULT_PASSWORD);
 
   for (let i = 1; i <= teacherCount; i++) {
@@ -140,7 +140,7 @@ async function main() {
   const studentsPerSection = 6;
   const studentPasswordHash = await hashPassword(DEFAULT_PASSWORD);
   const parentPasswordHash = await hashPassword(DEFAULT_PASSWORD);
-  const createdStudents: Awaited<ReturnType<typeof Student.create>>[] = [];
+  const createdStudents: HydratedDocument<IStudent>[] = [];
   let admissionSeq = 1;
 
   for (const section of sections) {
