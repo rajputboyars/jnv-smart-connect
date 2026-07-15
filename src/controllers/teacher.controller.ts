@@ -156,3 +156,23 @@ export async function deleteTeacher(id: string, actor: { id: string; school?: st
 
   return { id: teacher._id.toString() };
 }
+
+/** Lightweight, unpaginated view used by the Teacher Subject Allocation screen. */
+export async function listTeacherAllocations(school?: string) {
+  await connectDB();
+  if (!school) return [];
+
+  const teachers = await Teacher.find({ school, status: "active" })
+    .sort({ name: 1 })
+    .populate("assignedClasses.class", "name")
+    .populate("assignedClasses.section", "name")
+    .populate("assignedClasses.subject", "name")
+    .lean();
+
+  return teachers.map((t) => ({
+    id: t._id.toString(),
+    name: t.name,
+    employeeId: t.employeeId,
+    assignedClasses: t.assignedClasses,
+  }));
+}

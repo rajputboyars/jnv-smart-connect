@@ -43,3 +43,18 @@ export const NOTIFICATION_AUDIENCE_SCOPES = [
   "users",
 ] as const;
 export type NotificationAudienceScope = (typeof NOTIFICATION_AUDIENCE_SCOPES)[number];
+
+export const ATTENDANCE_STATUSES = [
+  "present",
+  "absent",
+  "late",
+  "half_day",
+  "leave",
+] as const;
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
+
+export const ATTENDANCE_ENTITY_TYPES = ["student", "teacher"] as const;
+export type AttendanceEntityType = (typeof ATTENDANCE_ENTITY_TYPES)[number];
+
+export const ATTENDANCE_METHODS = ["manual", "qr"] as const;
+export type AttendanceMethod = (typeof ATTENDANCE_METHODS)[number];

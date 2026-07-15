@@ -65,3 +65,31 @@ export async function updateTeacherRequest(id: string, input: UpdateTeacherInput
 export async function deleteTeacherRequest(id: string) {
   await apiFetch<{ id: string }>(`/api/teachers/${id}`, { method: "DELETE" });
 }
+
+export interface TeacherOption {
+  id: string;
+  name: string;
+  employeeId: string;
+}
+
+/** Small unpaginated list for dropdowns (class teacher assignment, etc.). */
+export async function fetchTeacherOptions() {
+  const res = await apiFetch<TeacherListItem[]>("/api/teachers?limit=100&status=active");
+  return (res.data ?? []).map((t) => ({ id: t._id, name: t.name, employeeId: t.employeeId }));
+}
+
+export interface TeacherAllocation {
+  id: string;
+  name: string;
+  employeeId: string;
+  assignedClasses: {
+    class: { _id: string; name: string };
+    section: { _id: string; name: string };
+    subject: { _id: string; name: string };
+  }[];
+}
+
+export async function fetchTeacherAllocations() {
+  const res = await apiFetch<TeacherAllocation[]>("/api/teachers/allocations");
+  return res.data ?? [];
+}

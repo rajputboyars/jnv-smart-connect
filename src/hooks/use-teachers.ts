@@ -8,6 +8,8 @@ import {
   createTeacherRequest,
   updateTeacherRequest,
   deleteTeacherRequest,
+  fetchTeacherOptions,
+  fetchTeacherAllocations,
   type TeacherListParams,
 } from "@/services/teacher.service";
 import { ApiClientError } from "@/lib/api-client";
@@ -64,4 +66,16 @@ export function useUpdateTeacher(id: string) {
       queryClient.invalidateQueries({ queryKey: ["teachers"] });
     },
   });
+}
+
+export function useTeacherOptions() {
+  return useQuery({
+    queryKey: ["teachers", "options"],
+    queryFn: fetchTeacherOptions,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useTeacherAllocations() {
+  return useQuery({ queryKey: ["teachers", "allocations"], queryFn: fetchTeacherAllocations });
 }

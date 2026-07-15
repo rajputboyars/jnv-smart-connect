@@ -9,4 +9,6 @@ export * from "./Parent";
 export * from "./Student";
 export * from "./Notification";
 export * from "./ActivityLog";
+export * from "./Attendance";
+export * from "./AttendanceSession";
 export * from "./enums";
