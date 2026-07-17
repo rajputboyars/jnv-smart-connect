@@ -56,4 +56,8 @@ export * from "./PromotionHistory";
 export * from "./EmployeeDocument";
 export * from "./PerformanceReview";
 
+// Maintenance
+export * from "./Technician";
+export * from "./MaintenanceTicket";
+
 export * from "./enums";
