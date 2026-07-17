@@ -39,4 +39,13 @@ export * from "./Vendor";
 export * from "./VendorPayment";
 export * from "./Budget";
 
+// Inventory
+export * from "./AssetCategory";
+export * from "./Asset";
+export * from "./AssetTransfer";
+export * from "./StockItem";
+export * from "./StockTransaction";
+export * from "./InventoryRequest";
+export * from "./PurchaseOrder";
+
 export * from "./enums";
