@@ -44,4 +44,13 @@ describe("cloudinary upload signing", () => {
     const teachers = createSignedUpload("teachers");
     expect(students.signature).not.toBe(teachers.signature);
   });
+
+  it("signs employee documents for Cloudinary's raw resource type with document formats", async () => {
+    const { createSignedUpload } = await import("./cloudinary");
+    const params = createSignedUpload("documents");
+
+    expect(params.resourceType).toBe("raw");
+    expect(params.allowedFormats).toContain("pdf");
+    expect(params.folder).toBe("jnv-smart-connect/documents");
+  });
 });

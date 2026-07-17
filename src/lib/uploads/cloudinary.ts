@@ -10,7 +10,26 @@ export function isUploadConfigured(): boolean {
 }
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_FORMATS = ["jpg", "jpeg", "png", "webp"];
+const ALLOWED_DOCUMENT_FORMATS = ["pdf", "doc", "docx", "jpg", "jpeg", "png"];
+
+export type UploadProfileKey = "students" | "teachers" | "documents";
+
+interface UploadProfile {
+  allowedFormats: string[];
+  maxFileSize: number;
+  resourceType: "image" | "raw";
+}
+
+const UPLOAD_PROFILES: Record<UploadProfileKey, UploadProfile> = {
+  students: { allowedFormats: ALLOWED_FORMATS, maxFileSize: MAX_UPLOAD_BYTES, resourceType: "image" },
+  teachers: { allowedFormats: ALLOWED_FORMATS, maxFileSize: MAX_UPLOAD_BYTES, resourceType: "image" },
+  // Employee documents (resume, id proof, contracts, ...) aren't always
+  // images, so they're signed for Cloudinary's "raw" resource type and a
+  // wider format allow-list.
+  documents: { allowedFormats: ALLOWED_DOCUMENT_FORMATS, maxFileSize: MAX_DOCUMENT_BYTES, resourceType: "raw" },
+};
 
 export interface SignedUploadParams {
   cloudName: string;
@@ -20,6 +39,7 @@ export interface SignedUploadParams {
   folder: string;
   allowedFormats: string;
   maxFileSize: number;
+  resourceType: "image" | "raw";
 }
 
 /**
@@ -29,7 +49,7 @@ export interface SignedUploadParams {
  * signature, so a client can't loosen them: Cloudinary rejects the upload
  * server-side if the actual file doesn't match what was signed.
  */
-export function createSignedUpload(folder: "students" | "teachers"): SignedUploadParams {
+export function createSignedUpload(profileKey: UploadProfileKey): SignedUploadParams {
   if (!isUploadConfigured()) {
     throw new Error("Cloudinary is not configured (CLOUDINARY_* env vars missing)");
   }
@@ -40,14 +60,15 @@ export function createSignedUpload(folder: "students" | "teachers"): SignedUploa
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
 
+  const profile = UPLOAD_PROFILES[profileKey];
   const timestamp = Math.round(Date.now() / 1000);
-  const scopedFolder = `jnv-smart-connect/${folder}`;
+  const scopedFolder = `jnv-smart-connect/${profileKey}`;
 
   const paramsToSign = {
     timestamp,
     folder: scopedFolder,
-    allowed_formats: ALLOWED_FORMATS.join(","),
-    max_file_size: MAX_UPLOAD_BYTES,
+    allowed_formats: profile.allowedFormats.join(","),
+    max_file_size: profile.maxFileSize,
   };
 
   const signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUDINARY_API_SECRET!);
@@ -58,8 +79,9 @@ export function createSignedUpload(folder: "students" | "teachers"): SignedUploa
     timestamp,
     signature,
     folder: scopedFolder,
-    allowedFormats: ALLOWED_FORMATS.join(","),
-    maxFileSize: MAX_UPLOAD_BYTES,
+    allowedFormats: profile.allowedFormats.join(","),
+    maxFileSize: profile.maxFileSize,
+    resourceType: profile.resourceType,
   };
 }
 

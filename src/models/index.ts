@@ -48,4 +48,12 @@ export * from "./StockTransaction";
 export * from "./InventoryRequest";
 export * from "./PurchaseOrder";
 
+// HR
+export * from "./StaffLeaveRequest";
+export * from "./SalaryStructure";
+export * from "./Payslip";
+export * from "./PromotionHistory";
+export * from "./EmployeeDocument";
+export * from "./PerformanceReview";
+
 export * from "./enums";

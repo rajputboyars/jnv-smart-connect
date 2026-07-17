@@ -8,9 +8,10 @@ export interface SignedUploadParams {
   folder: string;
   allowedFormats: string;
   maxFileSize: number;
+  resourceType: "image" | "raw";
 }
 
-export async function requestUploadSignature(folder: "students" | "teachers") {
+export async function requestUploadSignature(folder: "students" | "teachers" | "documents") {
   const res = await apiFetch<SignedUploadParams>("/api/uploads/sign", {
     method: "POST",
     body: JSON.stringify({ folder }),
@@ -28,7 +29,7 @@ export async function uploadToCloudinary(file: File, params: SignedUploadParams)
   formData.append("allowed_formats", params.allowedFormats);
   formData.append("max_file_size", String(params.maxFileSize));
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${params.cloudName}/image/upload`, {
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${params.cloudName}/${params.resourceType}/upload`, {
     method: "POST",
     body: formData,
   });

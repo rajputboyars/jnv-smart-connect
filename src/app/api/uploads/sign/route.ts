@@ -8,11 +8,12 @@ import { ok } from "@/lib/utils/api-response";
 
 // One endpoint, folder-scoped permission check: a photo upload for a
 // student record requires the same permission that lets you edit that
-// student, same for teachers — this endpoint doesn't grant any access a
-// caller doesn't already have via the students/teachers CRUD permissions.
+// student, same for teachers and HR documents — this endpoint doesn't grant
+// any access a caller doesn't already have via the underlying CRUD permission.
 const FOLDER_PERMISSIONS = {
   students: [PERMISSIONS.STUDENTS_CREATE, PERMISSIONS.STUDENTS_UPDATE],
   teachers: [PERMISSIONS.TEACHERS_CREATE, PERMISSIONS.TEACHERS_UPDATE],
+  documents: [PERMISSIONS.HR_MANAGE],
 } as const;
 
 export const POST = withErrorHandling(
