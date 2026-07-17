@@ -74,6 +74,67 @@ export function exportReceiptPdf(filename: string, details: ReceiptDetails) {
   doc.save(`${filename}.pdf`);
 }
 
+export interface CertificateDetails {
+  schoolName: string;
+  certificateTitle: string;
+  recipientName: string;
+  eventTitle: string;
+  achievementLine?: string;
+  date: string;
+  issuedBy?: string;
+}
+
+/** A landscape, bordered certificate — not a table dump, a printable award document. */
+export function exportCertificatePdf(filename: string, details: CertificateDetails) {
+  const doc = new jsPDF({ orientation: "landscape" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const center = pageWidth / 2;
+
+  doc.setDrawColor(29, 78, 216);
+  doc.setLineWidth(1.5);
+  doc.rect(8, 8, pageWidth - 16, pageHeight - 16);
+  doc.setLineWidth(0.4);
+  doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(90);
+  doc.text(details.schoolName, center, 30, { align: "center" });
+
+  doc.setFontSize(28);
+  doc.setTextColor(29, 78, 216);
+  doc.text(details.certificateTitle, center, 50, { align: "center" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.setTextColor(90);
+  doc.text("This certificate is proudly presented to", center, 68, { align: "center" });
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(24);
+  doc.setTextColor(20);
+  doc.text(details.recipientName, center, 84, { align: "center" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(13);
+  doc.setTextColor(60);
+  doc.text(details.achievementLine ?? `for participation in ${details.eventTitle}`, center, 98, {
+    align: "center",
+    maxWidth: pageWidth - 60,
+  });
+
+  doc.setFontSize(10);
+  doc.setTextColor(120);
+  doc.text(`Date: ${details.date}`, 24, pageHeight - 20);
+  if (details.issuedBy) {
+    doc.text(details.issuedBy, pageWidth - 24, pageHeight - 20, { align: "right" });
+    doc.line(pageWidth - 70, pageHeight - 24, pageWidth - 24, pageHeight - 24);
+  }
+
+  doc.save(`${filename}.pdf`);
+}
+
 export function exportToPdf(
   filename: string,
   title: string,

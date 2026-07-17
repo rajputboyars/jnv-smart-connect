@@ -60,4 +60,10 @@ export * from "./PerformanceReview";
 export * from "./Technician";
 export * from "./MaintenanceTicket";
 
+// Events
+export * from "./Event";
+export * from "./EventParticipant";
+export * from "./EventPhoto";
+export * from "./Certificate";
+
 export * from "./enums";
