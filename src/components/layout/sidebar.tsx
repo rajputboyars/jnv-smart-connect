@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { GraduationCap } from "lucide-react";
 import { NAV_ITEMS } from "@/components/layout/nav-config";
-import { can } from "@/lib/auth/rbac";
+import { canAny } from "@/lib/auth/rbac";
 import { ROLE_LABELS, type Role } from "@/types/roles";
 import { cn } from "@/lib/utils";
 
 export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
-  const items = NAV_ITEMS.filter((item) => can(role, item.permission));
+  const items = NAV_ITEMS.filter((item) => canAny(role, [item.permission].flat()));
 
   return (
     <aside className="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:border-sidebar-border lg:bg-sidebar lg:backdrop-blur-xl">

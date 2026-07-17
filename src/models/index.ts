@@ -22,4 +22,21 @@ export * from "./MedicineLog";
 export * from "./DoctorVisit";
 export * from "./Book";
 export * from "./BookIssue";
+
+// Finance
+export * from "./FeeCategory";
+export * from "./FeeStructure";
+export * from "./Scholarship";
+export * from "./StudentScholarship";
+export * from "./FeeInvoice";
+export * from "./FeePayment";
+export * from "./FeeWaiver";
+export * from "./Refund";
+export * from "./Income";
+export * from "./Donation";
+export * from "./Expense";
+export * from "./Vendor";
+export * from "./VendorPayment";
+export * from "./Budget";
+
 export * from "./enums";

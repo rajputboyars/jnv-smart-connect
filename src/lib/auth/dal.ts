@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { getAccessTokenPayload } from "./session";
-import { can, type Permission } from "./rbac";
+import { can, canAny, type Permission } from "./rbac";
 import type { AccessTokenPayload } from "./jwt";
 import type { Role } from "@/types/roles";
 
@@ -38,6 +38,21 @@ export async function requirePermission(permission: Permission): Promise<AccessT
   }
 
   if (!can(session.role, permission)) {
+    redirect("/unauthorized");
+  }
+
+  return session;
+}
+
+/** Same as requirePermission, but passes if the caller holds ANY of the given permissions. */
+export async function requireAnyPermission(permissions: Permission[]): Promise<AccessTokenPayload> {
+  const session = await getSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (!canAny(session.role, permissions)) {
     redirect("/unauthorized");
   }
 

@@ -17,6 +17,10 @@ import {
   Settings,
   BarChart3,
   Sparkles,
+  Boxes,
+  Briefcase,
+  Wrench,
+  PartyPopper,
 } from "lucide-react";
 import { PERMISSIONS, type Permission } from "@/lib/auth/rbac";
 
@@ -24,7 +28,8 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
-  permission: Permission;
+  /** Holding any one of these is enough to see the nav item. */
+  permission: Permission | Permission[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -39,7 +44,36 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Library", href: "/dashboard/library", icon: Library, permission: PERMISSIONS.LIBRARY_VIEW },
   { label: "Hostel", href: "/dashboard/hostel", icon: BedDouble, permission: PERMISSIONS.HOSTEL_VIEW },
   { label: "Health", href: "/dashboard/health", icon: HeartPulse, permission: PERMISSIONS.HEALTH_VIEW },
-  { label: "Accounts", href: "/dashboard/accounts", icon: Wallet, permission: PERMISSIONS.ACCOUNTS_MANAGE },
+  {
+    label: "Accounts & Finance",
+    href: "/dashboard/accounts",
+    icon: Wallet,
+    permission: [PERMISSIONS.ACCOUNTS_MANAGE, PERMISSIONS.FINANCE_VIEW],
+  },
+  {
+    label: "Inventory",
+    href: "/dashboard/inventory",
+    icon: Boxes,
+    permission: [PERMISSIONS.INVENTORY_VIEW, PERMISSIONS.INVENTORY_MANAGE],
+  },
+  {
+    label: "HR",
+    href: "/dashboard/hr",
+    icon: Briefcase,
+    permission: [PERMISSIONS.HR_VIEW, PERMISSIONS.HR_MANAGE],
+  },
+  {
+    label: "Maintenance",
+    href: "/dashboard/maintenance",
+    icon: Wrench,
+    permission: [PERMISSIONS.MAINTENANCE_VIEW, PERMISSIONS.MAINTENANCE_MANAGE],
+  },
+  {
+    label: "Events",
+    href: "/dashboard/events",
+    icon: PartyPopper,
+    permission: [PERMISSIONS.EVENTS_VIEW, PERMISSIONS.EVENTS_MANAGE],
+  },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell, permission: PERMISSIONS.NOTIFICATIONS_VIEW },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3, permission: PERMISSIONS.ANALYTICS_VIEW },
   { label: "AI Assist", href: "/dashboard/ai-assist", icon: Sparkles, permission: PERMISSIONS.AI_ASSIST_USE },

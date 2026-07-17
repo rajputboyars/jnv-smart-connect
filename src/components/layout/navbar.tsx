@@ -24,7 +24,7 @@ import {
 import { NAV_ITEMS } from "@/components/layout/nav-config";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { can } from "@/lib/auth/rbac";
+import { canAny } from "@/lib/auth/rbac";
 import { ROLE_LABELS, type Role } from "@/types/roles";
 import { useAuth } from "@/hooks/use-auth";
 import { initials } from "@/lib/utils";
@@ -92,7 +92,7 @@ export function Navbar({ role }: { role: Role }) {
                 <User className="size-4" /> Profile
               </Link>
             </DropdownMenuItem>
-            {can(role, NAV_ITEMS.find((n) => n.label === "Settings")!.permission) && (
+            {canAny(role, [NAV_ITEMS.find((n) => n.label === "Settings")!.permission].flat()) && (
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings">
                   <Settings className="size-4" /> Settings
@@ -113,7 +113,7 @@ export function Navbar({ role }: { role: Role }) {
             <DialogTitle>Navigate</DialogTitle>
           </DialogHeader>
           <nav className="flex flex-col gap-1">
-            {NAV_ITEMS.filter((item) => can(role, item.permission)).map((item) => (
+            {NAV_ITEMS.filter((item) => canAny(role, [item.permission].flat())).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
