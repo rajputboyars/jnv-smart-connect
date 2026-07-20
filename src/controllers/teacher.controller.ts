@@ -146,6 +146,43 @@ export async function deleteTeacher(id: string, actor: { id: string; school?: st
     throw ApiError.notFound("Teacher not found");
   }
 
+  // Cascade so we don't leave a login the teacher can still sign in with (now
+  // profile-less) or per-employee HR records / class-teacher references
+  // pointing at a teacher that no longer exists.
+  const [
+    { User },
+    { StaffLeaveRequest },
+    { SalaryStructure },
+    { Payslip },
+    { EmployeeDocument },
+    { PerformanceReview },
+    { PromotionHistory },
+    { Section },
+    { HostelBuilding },
+  ] = await Promise.all([
+    import("@/models/User"),
+    import("@/models/StaffLeaveRequest"),
+    import("@/models/SalaryStructure"),
+    import("@/models/Payslip"),
+    import("@/models/EmployeeDocument"),
+    import("@/models/PerformanceReview"),
+    import("@/models/PromotionHistory"),
+    import("@/models/Section"),
+    import("@/models/HostelBuilding"),
+  ]);
+
+  await Promise.all([
+    User.deleteOne({ _id: teacher.user }),
+    StaffLeaveRequest.deleteMany({ teacher: teacher._id }),
+    SalaryStructure.deleteMany({ teacher: teacher._id }),
+    Payslip.deleteMany({ teacher: teacher._id }),
+    EmployeeDocument.deleteMany({ teacher: teacher._id }),
+    PerformanceReview.deleteMany({ teacher: teacher._id }),
+    PromotionHistory.deleteMany({ teacher: teacher._id }),
+    Section.updateMany({ classTeacher: teacher._id }, { $unset: { classTeacher: "" } }),
+    HostelBuilding.updateMany({ warden: teacher._id }, { $unset: { warden: "" } }),
+  ]);
+
   await ActivityLog.create({
     user: actor.id,
     action: "teacher.delete",

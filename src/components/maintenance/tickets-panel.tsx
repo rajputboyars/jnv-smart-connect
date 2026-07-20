@@ -141,7 +141,15 @@ function NewTicketDialog({ onDone }: { onDone: () => void }) {
 }
 
 function AssignDialog({ ticket, onDone }: { ticket: MaintenanceTicketItem; onDone: () => void }) {
-  const { data: technicians = [] } = useTechnicians(ticket.category);
+  // List every active technician (not just exact-specialization matches) so no
+  // ticket is un-assignable; those matching the ticket's category are floated
+  // to the top and their specialization is shown for guidance.
+  const { data: allTechnicians = [] } = useTechnicians();
+  const technicians = [...allTechnicians].sort((a, b) => {
+    const aMatch = a.specialization === ticket.category ? 0 : 1;
+    const bMatch = b.specialization === ticket.category ? 0 : 1;
+    return aMatch - bMatch || a.name.localeCompare(b.name);
+  });
   const [technician, setTechnician] = useState("");
   const mutation = useAssignTechnician();
 
@@ -157,7 +165,7 @@ function AssignDialog({ ticket, onDone }: { ticket: MaintenanceTicketItem; onDon
         <SelectContent>
           {technicians.map((t) => (
             <SelectItem key={t._id} value={t._id}>
-              {t.name} · {t.phone}
+              {t.name} · {t.specialization.replace("_", " ")} · {t.phone}
             </SelectItem>
           ))}
         </SelectContent>

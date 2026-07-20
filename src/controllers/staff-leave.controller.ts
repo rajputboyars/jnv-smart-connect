@@ -5,7 +5,7 @@ import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
 import type { AccessTokenPayload } from "@/lib/auth/jwt";
 import { can, PERMISSIONS } from "@/lib/auth/rbac";
-import { resolveOwnTeacherId } from "@/lib/auth/teacher-scope";
+import { resolveOwnTeacherId, findOwnTeacherId } from "@/lib/auth/teacher-scope";
 import type {
   CreateStaffLeaveRequestInput,
   ReviewStaffLeaveRequestInput,
@@ -16,12 +16,19 @@ export async function listStaffLeaveRequests(session: AccessTokenPayload, status
   if (!session.school) return [];
 
   const canManage = can(session.role, PERMISSIONS.HR_MANAGE);
+  // Staff without HR_MANAGE only ever see their own requests — this endpoint
+  // doubles as "my leave" for regular staff and "all leave" for HR. A staff
+  // member with no employee record simply has no leave to show.
+  let ownTeacherId: string | null = null;
+  if (!canManage) {
+    ownTeacherId = await findOwnTeacherId(session);
+    if (!ownTeacherId) return [];
+  }
+
   const filter: Record<string, unknown> = {
     school: session.school,
     ...(status ? { status } : {}),
-    // Staff without HR_MANAGE only ever see their own requests — this
-    // endpoint doubles as "my leave" for regular staff and "all leave" for HR.
-    ...(canManage ? {} : { teacher: await resolveOwnTeacherId(session) }),
+    ...(canManage ? {} : { teacher: ownTeacherId }),
   };
 
   return StaffLeaveRequest.find(filter)

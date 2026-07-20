@@ -51,6 +51,13 @@ export async function updateScholarship(
   if (!scholarship) throw ApiError.notFound("Scholarship not found");
 
   Object.assign(scholarship, input);
+
+  // Re-check against the merged document: the validator can't catch a partial
+  // update that changes only `value` on an existing percentage scholarship.
+  if (scholarship.type === "percentage" && scholarship.value > 100) {
+    throw ApiError.badRequest("A percentage scholarship can't exceed 100%");
+  }
+
   await scholarship.save();
 
   await ActivityLog.create({

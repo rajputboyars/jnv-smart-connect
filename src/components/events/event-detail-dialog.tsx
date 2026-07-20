@@ -214,10 +214,16 @@ function CertificatesTab({
   const [title, setTitle] = useState("Certificate of Participation");
   const issueMutation = useIssueCertificate(eventId);
 
-  async function download(recipientName: string, certTitle: string, issuedBy: string, date: string) {
+  async function download(
+    recipientName: string,
+    certTitle: string,
+    issuedBy: string,
+    date: string,
+    schoolName?: string
+  ) {
     const { exportCertificatePdf } = await import("@/lib/export/pdf");
     exportCertificatePdf(`certificate-${recipientName.replace(/\s+/g, "-")}`, {
-      schoolName: "JNV Smart Connect",
+      schoolName: schoolName || "School",
       certificateTitle: certTitle,
       recipientName,
       eventTitle,
@@ -297,7 +303,13 @@ function CertificatesTab({
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    download(c.participant.student.name, c.title, c.issuedBy.name, formatDate(c.issuedAt))
+                    download(
+                      c.participant.student.name,
+                      c.title,
+                      c.issuedBy.name,
+                      formatDate(c.issuedAt),
+                      c.school?.name
+                    )
                   }
                 >
                   <Download className="size-4" /> Download

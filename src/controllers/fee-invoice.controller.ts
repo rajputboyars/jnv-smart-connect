@@ -385,15 +385,33 @@ export async function reviewRefund(id: string, input: ReviewRefundInput, actor: 
 
   const refund = await Refund.findOne({ _id: id, ...(actor.school ? { school: actor.school } : {}) });
   if (!refund) throw ApiError.notFound("Refund not found");
-  if (refund.status !== "pending") throw ApiError.conflict("This refund has already been reviewed");
 
-  refund.status = input.status;
+  // Allowed transitions: pending -> approved | rejected | processed, and
+  // approved -> processed. "rejected" and "processed" are terminal. This lets
+  // the two-step Approve → Mark processed flow work (previously any non-pending
+  // refund was rejected outright, so "Mark processed" could never succeed).
+  const current = refund.status;
+  const target = input.status;
+  const allowed =
+    (current === "pending" && (target === "approved" || target === "rejected" || target === "processed")) ||
+    (current === "approved" && target === "processed");
+  if (!allowed) {
+    throw ApiError.conflict(`A ${current} refund can't be marked ${target}`);
+  }
+
+  refund.status = target;
   refund.approvedBy = new Types.ObjectId(actor.id);
-  if (input.status === "processed") refund.processedAt = new Date();
+  if (target === "processed") refund.processedAt = new Date();
   await refund.save();
 
-  if (input.status === "approved" || input.status === "processed") {
-    const invoice = await FeeInvoice.findOne({ _id: (await FeePayment.findById(refund.payment))?.invoice });
+  // The money only actually leaves the invoice when the refund is *processed*
+  // (disbursed) — approval alone doesn't touch the balance. Because "processed"
+  // is terminal, this deduction runs exactly once per refund (no double-refund).
+  if (target === "processed") {
+    const payment = await FeePayment.findById(refund.payment);
+    const invoice = payment
+      ? await FeeInvoice.findOne({ _id: payment.invoice, ...(actor.school ? { school: actor.school } : {}) })
+      : null;
     if (invoice) {
       invoice.paidAmount = Math.max(0, Math.round((invoice.paidAmount - refund.amount) * 100) / 100);
       invoice.status = invoice.paidAmount >= netPayable(invoice) - 0.01 ? "paid" : invoice.paidAmount > 0 ? "partial" : "pending";

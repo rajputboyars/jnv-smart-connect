@@ -12,6 +12,7 @@ export async function listCertificates(eventId: string, school?: string) {
     .populate({ path: "participant", populate: { path: "student", select: "name admissionNumber" } })
     .populate("event", "title startDate")
     .populate("issuedBy", "name")
+    .populate("school", "name")
     .lean();
 }
 

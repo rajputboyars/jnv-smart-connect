@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Plus, Search, Eye, Pencil, Trash2 } from "lucide-react";
@@ -34,12 +34,31 @@ const STATUS_VARIANT: Record<string, "default" | "success" | "warning" | "outlin
 
 export function StudentTable() {
   const searchParams = useSearchParams();
+  const searchParam = searchParams.get("search") ?? "";
   const { user } = useAuth();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [search, setSearch] = useState(searchParam);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data, isLoading, isFetching } = useStudents({ page, limit: 10, search });
+  // Re-sync when the URL's ?search= changes (e.g. a fresh search from the
+  // global navbar while already on this page) — local state alone wouldn't
+  // pick that up. Uses React's render-time "reset state on prop change"
+  // pattern rather than an effect.
+  const [lastParam, setLastParam] = useState(searchParam);
+  if (searchParam !== lastParam) {
+    setLastParam(searchParam);
+    setSearch(searchParam);
+    setPage(1);
+  }
+
+  // Debounce the query term so typing doesn't fire a request per keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const { data, isLoading, isFetching } = useStudents({ page, limit: 10, search: debouncedSearch });
   const deleteMutation = useDeleteStudent();
 
   const canCreate = user && can(user.role, PERMISSIONS.STUDENTS_CREATE);

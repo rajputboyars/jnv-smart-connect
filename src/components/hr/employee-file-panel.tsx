@@ -320,6 +320,14 @@ export function EmployeeFilePanel() {
 
       {isLoading && (canManage ? !!selectedTeacher : true) && <Skeleton className="h-64 w-full rounded-xl" />}
 
+      {!isLoading && !canManage && !file && (
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No employee record is linked to your account yet.
+          </CardContent>
+        </Card>
+      )}
+
       {file && (
         <>
           <Card>

@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/db/connect";
+import { Event } from "@/models/Event";
 import { EventParticipant } from "@/models/EventParticipant";
 import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
@@ -19,6 +20,9 @@ export async function addEventParticipant(
 ) {
   await connectDB();
   if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+
+  const event = await Event.exists({ _id: input.event, school: actor.school });
+  if (!event) throw ApiError.notFound("Event not found");
 
   await assertStudentInSchool(input.student, actor.school);
 

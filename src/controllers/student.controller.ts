@@ -147,6 +147,24 @@ export async function deleteStudent(id: string, actor: { id: string; school?: st
     throw ApiError.notFound("Student not found");
   }
 
+  // Clean up the login and the records that are meaningless without the
+  // student (parent links, scholarship assignments, event participation).
+  // Financial and attendance history is intentionally preserved as an audit
+  // trail — it references the (now removed) student by id by design.
+  const [{ User }, { Parent }, { StudentScholarship }, { EventParticipant }] = await Promise.all([
+    import("@/models/User"),
+    import("@/models/Parent"),
+    import("@/models/StudentScholarship"),
+    import("@/models/EventParticipant"),
+  ]);
+
+  await Promise.all([
+    student.user ? User.deleteOne({ _id: student.user }) : Promise.resolve(),
+    Parent.updateMany({ children: student._id }, { $pull: { children: student._id } }),
+    StudentScholarship.deleteMany({ student: student._id }),
+    EventParticipant.deleteMany({ student: student._id }),
+  ]);
+
   await ActivityLog.create({
     user: actor.id,
     action: "student.delete",

@@ -73,6 +73,7 @@ export interface CertificateItem {
   issuedBy: { name: string };
   event: { _id: string; title: string; startDate: string };
   participant: { _id: string; student: { name: string; admissionNumber: string } };
+  school?: { name: string };
 }
 export async function fetchCertificates(eventId: string) {
   const res = await apiFetch<CertificateItem[]>(`/api/events/${eventId}/certificates`);

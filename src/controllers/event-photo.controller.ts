@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/db/connect";
+import { Event } from "@/models/Event";
 import { EventPhoto } from "@/models/EventPhoto";
 import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
@@ -15,6 +16,9 @@ export async function listEventPhotos(eventId: string, school?: string) {
 export async function addEventPhoto(input: CreateEventPhotoInput, actor: { id: string; school?: string }) {
   await connectDB();
   if (!actor.school) throw ApiError.badRequest("Your account is not linked to a school");
+
+  const event = await Event.exists({ _id: input.event, school: actor.school });
+  if (!event) throw ApiError.notFound("Event not found");
 
   const photo = await EventPhoto.create({
     event: input.event,

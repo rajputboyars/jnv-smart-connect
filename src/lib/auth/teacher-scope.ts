@@ -17,6 +17,20 @@ export async function resolveOwnTeacherId(session: AccessTokenPayload): Promise<
 }
 
 /**
+ * Non-throwing variant for read/list paths. Some staff roles hold the
+ * self-service HR_VIEW permission but have no employee (Teacher) record
+ * (e.g. a librarian or hostel warden). For those, a self-service list should
+ * simply come back empty rather than erroring — callers must treat `null` as
+ * "no records", never as "unscoped".
+ */
+export async function findOwnTeacherId(session: AccessTokenPayload): Promise<string | null> {
+  const teacher = await Teacher.findOne({ user: session.sub, ...(session.school ? { school: session.school } : {}) })
+    .select("_id")
+    .lean();
+  return teacher ? teacher._id.toString() : null;
+}
+
+/**
  * Shared scoping rule for any HR endpoint that takes an arbitrary
  * `teacherId`: HR_MANAGE holders (Principal/Accountant/…) have full oversight,
  * everyone else (self-service HR_VIEW) may only reach their own employee

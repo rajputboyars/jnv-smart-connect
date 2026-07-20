@@ -6,7 +6,7 @@ import { ActivityLog } from "@/models/ActivityLog";
 import { ApiError } from "@/lib/utils/api-error";
 import type { AccessTokenPayload } from "@/lib/auth/jwt";
 import { can, PERMISSIONS } from "@/lib/auth/rbac";
-import { resolveOwnTeacherId } from "@/lib/auth/teacher-scope";
+import { findOwnTeacherId } from "@/lib/auth/teacher-scope";
 import type {
   CreateSalaryStructureInput,
   GeneratePayslipInput,
@@ -77,7 +77,13 @@ export async function listPayslips(
   if (!session.school) return [];
 
   const canManage = can(session.role, PERMISSIONS.HR_MANAGE);
-  const teacherFilter = canManage ? query.teacher : await resolveOwnTeacherId(session);
+  let teacherFilter = query.teacher;
+  if (!canManage) {
+    // Self-service: scope strictly to the caller's own employee record. If they
+    // have none, return nothing — never fall through to an unscoped list.
+    teacherFilter = (await findOwnTeacherId(session)) ?? undefined;
+    if (!teacherFilter) return [];
+  }
 
   return Payslip.find({
     school: session.school,

@@ -38,16 +38,36 @@ export type UpdateFeeStructureInput = z.infer<typeof updateFeeStructureSchema>;
 
 // --- Scholarships & waivers ---
 
-export const createScholarshipSchema = z.object({
+const scholarshipFields = {
   name: z.string().trim().min(2, "Name is required"),
   type: z.enum(SCHOLARSHIP_TYPES),
   value: z.number().min(0),
   criteria: z.string().trim().max(500).optional().or(z.literal("")),
-});
+};
+
+// A percentage scholarship above 100% would drive an invoice's net payable
+// negative (auto-marking it "paid" and corrupting receivable/report totals),
+// so cap it. Fixed-amount scholarships are clamped to the fee at generation time.
+const capPercentage = (
+  data: { type?: string; value?: number },
+  ctx: z.RefinementCtx
+) => {
+  if (data.type === "percentage" && typeof data.value === "number" && data.value > 100) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["value"],
+      message: "A percentage scholarship can't exceed 100%",
+    });
+  }
+};
+
+export const createScholarshipSchema = z.object(scholarshipFields).superRefine(capPercentage);
 export type CreateScholarshipInput = z.infer<typeof createScholarshipSchema>;
-export const updateScholarshipSchema = createScholarshipSchema.partial().extend({
-  isActive: z.boolean().optional(),
-});
+export const updateScholarshipSchema = z
+  .object(scholarshipFields)
+  .partial()
+  .extend({ isActive: z.boolean().optional() })
+  .superRefine(capPercentage);
 export type UpdateScholarshipInput = z.infer<typeof updateScholarshipSchema>;
 
 export const assignScholarshipSchema = z.object({

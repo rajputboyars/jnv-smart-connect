@@ -24,7 +24,7 @@ import {
 import { NAV_ITEMS } from "@/components/layout/nav-config";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { canAny } from "@/lib/auth/rbac";
+import { can, canAny, PERMISSIONS } from "@/lib/auth/rbac";
 import { ROLE_LABELS, type Role } from "@/types/roles";
 import { useAuth } from "@/hooks/use-auth";
 import { initials } from "@/lib/utils";
@@ -54,17 +54,21 @@ export function Navbar({ role }: { role: Role }) {
         <Menu className="size-5" />
       </Button>
 
-      <form onSubmit={handleSearch} className="hidden max-w-sm flex-1 items-center gap-2 sm:flex">
-        <div className="relative w-full">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search students by name or admission no."
-            className="pl-9"
-          />
-        </div>
-      </form>
+      {/* Only roles that can actually view students get the global student
+          search — otherwise submitting it would bounce them to /unauthorized. */}
+      {can(role, PERMISSIONS.STUDENTS_VIEW) && (
+        <form onSubmit={handleSearch} className="hidden max-w-sm flex-1 items-center gap-2 sm:flex">
+          <div className="relative w-full">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search students by name or admission no."
+              className="pl-9"
+            />
+          </div>
+        </form>
+      )}
 
       <div className="ml-auto flex items-center gap-1">
         <ThemeToggle />

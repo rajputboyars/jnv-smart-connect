@@ -210,6 +210,6 @@ export async function fetchEmployeeFile(teacherId: string) {
   return res.data as EmployeeFile;
 }
 export async function fetchMyEmployeeFile() {
-  const res = await apiFetch<EmployeeFile>("/api/hr/employees/me/file");
-  return res.data as EmployeeFile;
+  const res = await apiFetch<EmployeeFile | null>("/api/hr/employees/me/file");
+  return (res.data ?? null) as EmployeeFile | null;
 }

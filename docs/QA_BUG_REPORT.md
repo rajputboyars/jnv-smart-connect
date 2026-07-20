@@ -12,24 +12,46 @@ compilation**, not build breakages.
 
 ## Severity summary
 
-| ID | Severity | Area | Title |
-|----|----------|------|-------|
-| BUG-01 | 🔴 High | Finance | "Mark processed" on a refund always fails; two-step refund workflow is broken |
-| BUG-02 | 🟠 Medium | Finance | Percentage scholarship value is not capped at 100% |
-| BUG-03 | 🟠 Medium | HR | Self-service HR tabs error out for staff roles with no employee record |
-| BUG-04 | 🟠 Medium | Students/Teachers | Deleting a teacher/student orphans the linked login and related records |
-| BUG-05 | 🟡 Low | Events | Participant/photo/certificate writes don't verify the event's school |
-| BUG-06 | 🟡 Low | Inventory | Low-stock notifications are sent on every transaction (spam) |
-| BUG-07 | 🟡 Low | Finance | A refund "approved" already removes the money in-system |
-| BUG-08 | 🟠 Medium | UI / Shell | Global "Search students" bar is shown to Parents/Students who can't view students |
-| BUG-09 | 🟡 Low | Events | Certificate PDF hard-codes the school name |
-| BUG-10 | 🟡 Low | UI / Students | Re-searching from the navbar doesn't update the Students table |
-| BUG-11 | 🟡 Low | UI | Search inputs fire one request per keystroke (no debounce) |
-| BUG-12 | 🟡 Low | Maintenance | "Assign technician" only lists exact specialization matches |
+| ID | Severity | Area | Title | Status |
+|----|----------|------|-------|--------|
+| BUG-01 | 🔴 High | Finance | "Mark processed" on a refund always fails; two-step refund workflow is broken | ✅ Fixed |
+| BUG-02 | 🟠 Medium | Finance | Percentage scholarship value is not capped at 100% | ✅ Fixed |
+| BUG-03 | 🟠 Medium | HR | Self-service HR tabs error out for staff roles with no employee record | ✅ Fixed |
+| BUG-04 | 🟠 Medium | Students/Teachers | Deleting a teacher/student orphans the linked login and related records | ✅ Fixed |
+| BUG-05 | 🟡 Low | Events | Participant/photo/certificate writes don't verify the event's school | ✅ Fixed |
+| BUG-06 | 🟡 Low | Inventory | Low-stock notifications are sent on every transaction (spam) | ✅ Fixed |
+| BUG-07 | 🟡 Low | Finance | A refund "approved" already removes the money in-system | ✅ Fixed |
+| BUG-08 | 🟠 Medium | UI / Shell | Global "Search students" bar is shown to Parents/Students who can't view students | ✅ Fixed |
+| BUG-09 | 🟡 Low | Events | Certificate PDF hard-codes the school name | ✅ Fixed |
+| BUG-10 | 🟡 Low | UI / Students | Re-searching from the navbar doesn't update the Students table | ✅ Fixed |
+| BUG-11 | 🟡 Low | UI | Search inputs fire one request per keystroke (no debounce) | ✅ Fixed |
+| BUG-12 | 🟡 Low | Maintenance | "Assign technician" only lists exact specialization matches | ✅ Fixed |
 
 Severity key: 🔴 **High** = broken feature / data corruption; 🟠 **Medium** =
 significant UX breakage or a latent data-integrity risk; 🟡 **Low** = polish,
 spam, or edge case.
+
+> **All 12 findings were fixed on 2026-07-20** — see **Fixes applied** below.
+> Typecheck, full ESLint, the 45 unit tests, and the production build all pass
+> after the changes.
+
+---
+
+## Fixes applied (2026-07-20)
+
+| ID | Fix | Key files |
+|----|-----|-----------|
+| BUG-01 / BUG-07 | Rewrote `reviewRefund` as an explicit state machine (`pending → approved \| rejected \| processed`, `approved → processed`). The invoice balance is decremented **only** on `processed` (terminal, so exactly once) — Approve no longer moves money, and "Mark processed" works. | `controllers/fee-invoice.controller.ts` |
+| BUG-02 | `superRefine` caps percentage scholarships at 100% on create/update, plus a controller-side guard on the merged doc for value-only updates. | `validators/finance.validator.ts`, `controllers/scholarship.controller.ts` |
+| BUG-03 | Non-throwing `findOwnTeacherId`; self-service leave/payslip lists and `me/file` return empty/`null` (friendly empty state) for staff with no employee record — and never fall through to an unscoped query. | `lib/auth/teacher-scope.ts`, `controllers/staff-leave.controller.ts`, `controllers/payroll.controller.ts`, `app/api/hr/employees/me/file/route.ts`, `components/hr/employee-file-panel.tsx` |
+| BUG-04 | `deleteTeacher`/`deleteStudent` cascade: remove the linked `User` login, delete per-person records (HR / scholarships / event participation), unset dangling `classTeacher`/`warden`/parent-children refs. Financial & attendance history preserved as audit trail. | `controllers/teacher.controller.ts`, `controllers/student.controller.ts` |
+| BUG-05 | Event participant/photo creation asserts the parent `Event` is in the caller's school before writing. | `controllers/event-participant.controller.ts`, `controllers/event-photo.controller.ts` |
+| BUG-06 | Low-stock notification fires only on the **transition** into low stock (above reorder before, at/below after). | `controllers/stock.controller.ts` |
+| BUG-08 | The global student-search box renders only for roles holding `STUDENTS_VIEW`. | `components/layout/navbar.tsx` |
+| BUG-09 | Certificates carry the real school name (populated in the API, passed into the PDF). | `controllers/certificate.controller.ts`, `services/event.service.ts`, `components/events/event-detail-dialog.tsx` |
+| BUG-10 | The Students table re-syncs its search from `?search=` via React's render-time reset pattern. | `components/students/student-table.tsx` |
+| BUG-11 | Student search is debounced (300 ms) before hitting the query. | `components/students/student-table.tsx` |
+| BUG-12 | "Assign technician" lists every active technician (best matches floated to the top, specialization shown), so no ticket is un-assignable. | `components/maintenance/tickets-panel.tsx` |
 
 ---
 

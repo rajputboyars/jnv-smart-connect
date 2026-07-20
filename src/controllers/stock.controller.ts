@@ -82,6 +82,8 @@ export async function recordStockTransaction(
   const item = await StockItem.findOne({ _id: input.stockItem, school: actor.school });
   if (!item) throw ApiError.notFound("Stock item not found");
 
+  const wasAboveReorder = item.quantityInStock > item.reorderLevel;
+
   if (input.type === "purchase") {
     item.quantityInStock += input.quantity;
   } else if (input.type === "issue") {
@@ -106,7 +108,10 @@ export async function recordStockTransaction(
     school: actor.school,
   });
 
-  if (item.quantityInStock <= item.reorderLevel) {
+  // Only alert on the transition *into* low stock (was above the reorder level
+  // before this movement, at/below it after) — otherwise every subsequent issue
+  // on an already-low item would spam a fresh notification.
+  if (wasAboveReorder && item.quantityInStock <= item.reorderLevel) {
     await Notification.create({
       title: `Low stock: ${item.name}`,
       message: `${item.name} is at ${item.quantityInStock} ${item.unit}(s), at or below the reorder level of ${item.reorderLevel}.`,
